@@ -87,6 +87,37 @@ def center_loss(features, label, alfa, nrof_classes):
     loss = tf.reduce_mean(tf.square(features - centers_batch))
     return loss, centers
 
+def my_loss(features, centers, label, alpha, nrof_classes):
+    """My version of the center loss which includes the contrastive term
+        features: batch_size x nrof_features
+        centers: nrof_classes x nrof_features
+        label: batch_size vector after reshaping
+        alpha: threshold controlling the repulsion range
+    """
+    batch_size = tf.shape(features)[0]
+    label = tf.reshape(label, [-1])
+
+    XX = tf.reduce_sum(features*features, 1)
+    XX = tf.reshape(XX, [-1, 1])
+    YY = tf.reduce_sum(centers*centers, 1)
+    YY = tf.reshape(YY, [-1, 1])
+
+    # explicit broadcasting to match the batch_size x nrof_classes shape of the distance matrix 
+    XXb = tf.tile(XX, tf.stack([1, nrof_classes]))
+    YYb = tf.tile(tf.transpose(YY), tf.stack([batch_size, 1]))
+
+    XY = tf.matmul(features, tf.transpose(centers))
+
+    # distance matrix: batch_size x nrof_classes
+    distances = XXb + YYb - 2*XY
+
+    # create a batch_size x nrof_classes mask of center assignments
+    delta = tf.one_hot(label, nrof_classes, 0.0, 1.0)
+
+    #ignore distances to the instance's class center
+    loss = tf.reduce_mean(tf.maximum(0., alpha - tf.multiply(delta, distances)))
+    return loss
+
 def get_image_paths_and_labels(dataset):
     image_paths_flat = []
     labels_flat = []
