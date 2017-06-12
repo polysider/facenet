@@ -92,3 +92,7 @@ ENV/
 
 # PyCharm project setting
 .idea
+
+# Model files and logs
+/models/
+/logs/
