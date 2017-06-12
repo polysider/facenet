@@ -163,8 +163,12 @@ def main(args):
 
         # Add center loss
         if args.center_loss_factor>0.0:
-            prelogits_center_loss, _ = facenet.center_loss(prelogits, label_batch, args.center_loss_alfa, nrof_classes)
+            prelogits_center_loss, centers = facenet.center_loss(prelogits, label_batch, args.center_loss_alfa, nrof_classes)
             tf.add_to_collection(tf.GraphKeys.REGULARIZATION_LOSSES, prelogits_center_loss * args.center_loss_factor)
+            # Add repulsive loss
+            if args.repulsive_loss_factor>0.0:
+                prelogits_repulsive_loss = facenet.repulsive_loss(prelogits, centers, label_batch, args.repulsive_loss_alpha, nrof_classes)
+                tf.add_to_collection(tf.GraphKeys.REGULARIZATION_LOSSES, prelogits_repulsive_loss * args.repulsive_loss_factor)
 
         learning_rate = tf.train.exponential_decay(learning_rate_placeholder, global_step,
             args.learning_rate_decay_epochs*args.epoch_size, args.learning_rate_decay_factor, staircase=True)
@@ -440,8 +444,15 @@ def parse_arguments(argv):
         help='Number of images to process in a batch in the LFW test set.', default=100)
     parser.add_argument('--lfw_nrof_folds', type=int,
         help='Number of folds to use for cross validation. Mainly used for testing.', default=10)
+
+    # Repulsive loss parameters
+    parser.add_argument('--repulsive_loss_factor', type=float,
+        help='Repulsive loss factor.', default=0.0)
+    parser.add_argument('--repulsive_loss_alpha', type=float,
+        help='The threshold value for the repulsive loss.', default=1)
+
     return parser.parse_args(argv)
-  
+
 
 if __name__ == '__main__':
     main(parse_arguments(sys.argv[1:]))

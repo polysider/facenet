@@ -87,8 +87,8 @@ def center_loss(features, label, alfa, nrof_classes):
     loss = tf.reduce_mean(tf.square(features - centers_batch))
     return loss, centers
 
-def my_loss(features, centers, label, alpha, nrof_classes):
-    """My version of the center loss which includes the contrastive term
+def repulsive_loss(features, centers, label, alpha, nrof_classes):
+    """This loss includes the contrastive term between a sample and centers of other classes
         features: batch_size x nrof_features
         centers: nrof_classes x nrof_features
         label: batch_size vector after reshaping
